@@ -39,6 +39,7 @@ fn forward(src: net::TcpStream, dst: net::TcpStream) {
 		thread::spawn(move || match io::copy(&mut src_read, &mut dst_write) {
 			_ => {
 				println!("odbieram");
+				src_read.set_nonblocking(true).expect("set_nonblocking call on src_read failed");
 				let mut buf = vec![];
 				match src_read.read_to_end(&mut buf) {
 					Ok(_) => println!("odczytane"),
@@ -51,6 +52,7 @@ fn forward(src: net::TcpStream, dst: net::TcpStream) {
 		thread::spawn(move || match io::copy(&mut dst_read, &mut src_write) {
 			_ => {
 				println!("wysylam");
+				src_write.set_nonblocking(true).expect("set_nonblocking call on src_write failed");
 				let mut buf = vec![];
 				match src_write.read_to_end(&mut buf) {
 					Ok(_) => println!("odczytane"),
