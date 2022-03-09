@@ -1,4 +1,5 @@
 use std::{env};
+use std::net;
 
 struct Server {
 	client: String,
@@ -17,6 +18,13 @@ impl IServer for Server {
 
 	fn run(&self) {
 		let (client, server) = (self.client.clone(), self.server.clone());
+		let listener = net::TcpListener::bind(client).unwrap();
+
+		for stream in listener.incoming() {
+			println!("packet detected");
+			let src = stream.unwrap();
+			let server = server.clone();
+		}
 	}
 }
 
