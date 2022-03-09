@@ -1,5 +1,4 @@
-use std::{env};
-use std::net;
+use std::{env, io, thread, net};
 
 struct Server {
 	client: String,
@@ -21,10 +20,36 @@ impl IServer for Server {
 		let listener = net::TcpListener::bind(client).unwrap();
 
 		for stream in listener.incoming() {
-			println!("packet detected");
 			let src = stream.unwrap();
 			let server = server.clone();
+
+			thread::spawn(move || {
+				let dst = net::TcpStream::connect(server).unwrap();
+				forward(src, dst);
+			});
 		}
+	}
+}
+
+fn forward(src: net::TcpStream, dst: net::TcpStream) {
+	let (mut src_read, mut src_write) = (src.try_clone().unwrap(), src.try_clone().unwrap());
+	let (mut dst_read, mut dst_write) = (dst.try_clone().unwrap(), dst.try_clone().unwrap());
+
+	let threads = vec![
+		thread::spawn(move || match io::copy(&mut src_read, &mut dst_write) {
+			_ => {
+				return;
+			}
+		}),
+		thread::spawn(move || match io::copy(&mut dst_read, &mut src_write) {
+			_ => {
+				return;
+			}
+		}),
+	];
+
+	for t in threads {
+		t.join().unwrap();
 	}
 }
 
