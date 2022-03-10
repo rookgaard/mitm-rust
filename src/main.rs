@@ -1,4 +1,4 @@
-use std::{env, io, thread, net};
+use std::{env, io, io::Read, thread, net};
 
 struct Server {
 	client: String,
@@ -32,17 +32,36 @@ impl IServer for Server {
 }
 
 fn forward(src: net::TcpStream, dst: net::TcpStream) {
+	println!("forward");
 	let (mut src_read, mut src_write) = (src.try_clone().unwrap(), src.try_clone().unwrap());
 	let (mut dst_read, mut dst_write) = (dst.try_clone().unwrap(), dst.try_clone().unwrap());
 
 	let threads = vec![
 		thread::spawn(move || match io::copy(&mut src_read, &mut dst_write) {
 			_ => {
+				println!("odbieram");
+//				src_read.set_nonblocking(true).expect("set_nonblocking call on src_read failed");
+				let mut buf = vec![];
+				loop {
+					match src_read.read_to_end(&mut buf) {
+						Ok(_) => {println!("odczytane"); break;},
+						Err(e) => panic!("encountered IO error: {}", e),
+					};
+				};
+				println!("bytes: {:?}", buf);
 				return;
 			}
 		}),
 		thread::spawn(move || match io::copy(&mut dst_read, &mut src_write) {
 			_ => {
+				println!("wysylam");
+//				src_write.set_nonblocking(true).expect("set_nonblocking call on src_write failed");
+				let mut buf = vec![];
+				match src_write.read_to_end(&mut buf) {
+					Ok(_) => println!("odczytane"),
+					Err(e) => panic!("encountered IO error: {}", e),
+				};
+				println!("bytes: {:?}", buf);
 				return;
 			}
 		}),
