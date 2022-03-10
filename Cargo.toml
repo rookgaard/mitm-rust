@@ -12,4 +12,14 @@ lto = "fat"
 codegen-units = 1
 panic = 'abort'
 
+[[example]]
+name = "net"
+path = "src/main.rs"
+
+[[example]]
+name = "tokio"
+path = "src/tokio.rs"
+
 [dependencies]
+tokio = { version = "1.0.0", features = ["full", "tracing"] }
+futures = { version = "0.3.0", features = ["thread-pool"]}
